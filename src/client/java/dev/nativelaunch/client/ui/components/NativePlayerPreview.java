@@ -1,63 +1,94 @@
 package dev.nativelaunch.client.ui.components;
 
-import dev.nativelaunch.client.ui.render.ColorUtil;
-import dev.nativelaunch.client.ui.render.Render2D;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 
 import java.util.function.Supplier;
 
 public class NativePlayerPreview extends NativeWidget {
 
-    private final PlayerSkinWidget skinWidget;
+    private final Model.Simple wideModel;
+    private final Model.Simple slimModel;
+    private final Supplier<PlayerSkin> skinSupplier;
+
+    private float rotationX = -5.0f;
+    private float rotationY = 25.0f; // Turned 25 degrees naturally like Essential
 
     public NativePlayerPreview(int x, int y, int width, int height) {
         super(x, y, width, height, Component.literal("Player Preview"), null);
 
         Minecraft mc = Minecraft.getInstance();
         EntityModelSet modelSet = mc.getEntityModels();
-        Supplier<PlayerSkin> skinSupplier = mc.getSkinManager().createLookup(mc.getGameProfile(), true);
+        this.skinSupplier = mc.getSkinManager().createLookup(mc.getGameProfile(), true);
 
-        this.skinWidget = new PlayerSkinWidget(width, height, modelSet, skinSupplier);
-        this.skinWidget.setX(x);
-        this.skinWidget.setY(y);
+        // 1. Bake both Wide (Steve) and Slim (Alex) player models
+        ModelPart widePart = modelSet.bakeLayer(ModelLayers.PLAYER);
+        ModelPart slimPart = modelSet.bakeLayer(ModelLayers.PLAYER_SLIM);
+
+        // 2. Pose the arms with a natural slight outward rest angle (zRot ~ 0.08 rad)
+        // This stops the arms from colliding and clipping into the torso, which caused the black stripe shadow!
+        adjustArmPose(widePart);
+        adjustArmPose(slimPart);
+
+        this.wideModel = new Model.Simple(widePart, RenderTypes::entityTranslucent);
+        this.slimModel = new Model.Simple(slimPart, RenderTypes::entityTranslucent);
     }
 
-    @Override
-    public void setX(int x) {
-        super.setX(x);
-        if (this.skinWidget != null) {
-            this.skinWidget.setX(x);
-        }
-    }
+    private void adjustArmPose(ModelPart root) {
+        try {
+            ModelPart rightArm = root.getChild("right_arm");
+            ModelPart leftArm = root.getChild("left_arm");
 
-    @Override
-    public void setY(int y) {
-        super.setY(y);
-        if (this.skinWidget != null) {
-            this.skinWidget.setY(y);
+            // Angle arms slightly outward into natural resting stance
+            rightArm.zRot = 0.07f;
+            leftArm.zRot = -0.07f;
+
+            // Slight outward X translation to eliminate torso intersection
+            rightArm.x = -5.2f;
+            leftArm.x = 5.2f;
+        } catch (Exception ignored) {
         }
     }
 
     @Override
     protected void onDrag(MouseButtonEvent event, double dragX, double dragY) {
-        if (this.skinWidget != null) {
-            this.skinWidget.mouseDragged(event, dragX, dragY);
-        }
+        this.rotationY = Mth.clamp(this.rotationY + (float) dragX * 2.5f, -80.0f, 80.0f);
+        this.rotationX = Mth.clamp(this.rotationX - (float) dragY * 2.5f, -30.0f, 30.0f);
     }
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float delta) {
         updateHoverState(delta);
 
-        // 3D Player Model Rendering (Clean, no sci-fi box or glow)
-        this.skinWidget.extractRenderState(extractor, mouseX, mouseY, delta);
+        PlayerSkin skin = this.skinSupplier.get();
+        if (skin != null) {
+            float scale = 0.97f * this.height / 2.125f;
+            Model.Simple model = (skin.model() == PlayerModelType.SLIM) ? this.slimModel : this.wideModel;
+
+            extractor.skin(
+                    model,
+                    skin.body().texturePath(),
+                    scale,
+                    this.rotationX,
+                    this.rotationY,
+                    -1.0625f,
+                    this.getX(),
+                    this.getY(),
+                    this.getRight(),
+                    this.getBottom()
+            );
+        }
     }
 
     @Override
