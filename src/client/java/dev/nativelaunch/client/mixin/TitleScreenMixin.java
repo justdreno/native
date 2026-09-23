@@ -5,6 +5,8 @@ import dev.nativelaunch.client.ui.components.VanillaIconButton;
 import dev.nativelaunch.client.ui.render.IconDrawUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
@@ -22,20 +24,20 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void initNativeTitleScreen(CallbackInfo ci) {
-        // --- 1. Left Side: Natural 3D Player Avatar & Wardrobe Button ---
-        int playerWidth = 65;
-        int playerHeight = 125;
-        int playerX = 38;
-        // Position player standing naturally towards bottom
-        int playerY = Math.max(10, this.height - 165);
+        // --- 1. Left Side: Natural Tall 3D Player Avatar & Wardrobe Button ---
+        int playerWidth = 80;
+        int playerHeight = 135;
+        int playerX = 30;
+        // Vertically center player nicely so head is level with Singleplayer row
+        int playerY = Math.max(20, (this.height / 2) - 68);
 
         NativePlayerPreview playerPreview = new NativePlayerPreview(playerX, playerY, playerWidth, playerHeight);
         this.addRenderableWidget(playerPreview);
 
-        // Vanilla-style 20x20 Wardrobe Button directly below the player (like Essential)
+        // Vanilla-style 20x20 Wardrobe Button directly below player avatar
         int wardrobeSize = 20;
         int wardrobeX = playerX + (playerWidth - wardrobeSize) / 2;
-        int wardrobeY = this.height - 35;
+        int wardrobeY = Math.min(this.height - 28, playerY + playerHeight + 4);
 
         this.addRenderableWidget(new VanillaIconButton(
                 wardrobeX,
@@ -48,26 +50,26 @@ public abstract class TitleScreenMixin extends Screen {
                     }
                 },
                 (extractor, x, y, hovered) -> {
-                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
-                    IconDrawUtil.drawShirt(extractor, x + 1, y, color);
+                    int color = hovered ? 0xFFFFFFFF : 0xFFD8D8D8;
+                    IconDrawUtil.drawShirt(extractor, x, y, color);
                 }
         ));
 
-        // --- 2. Right Side: Vertical 6-Button Toolbar (Authentic Minecraft Buttons) ---
+        // --- 2. Right Side: Vertical 6-Button Toolbar (With Solid Plate & Beveled Outlines) ---
         int btnSize = 20;
         int rightX = this.width - btnSize - 4;
         int totalHeight = (6 * btnSize) + (5 * 2); // 6 buttons + 2px gaps
         int startY = (this.height - totalHeight) / 2;
         int step = btnSize + 2;
 
-        // 1. News Icon
+        // 1. News Icon (RSS wave)
         this.addRenderableWidget(new VanillaIconButton(
                 rightX, startY, btnSize,
                 Component.literal("News"),
                 btn -> {},
                 (extractor, x, y, hovered) -> {
-                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
-                    IconDrawUtil.drawNews(extractor, x + 1, y + 1, color);
+                    int color = hovered ? 0xFFFFFFFF : 0xFFD8D8D8;
+                    IconDrawUtil.drawNews(extractor, x, y, color);
                 }
         ));
 
@@ -77,8 +79,8 @@ public abstract class TitleScreenMixin extends Screen {
                 Component.literal("Friends"),
                 btn -> {},
                 (extractor, x, y, hovered) -> {
-                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
-                    IconDrawUtil.drawFriends(extractor, x + 1, y + 1, color);
+                    int color = hovered ? 0xFFFFFFFF : 0xFFD8D8D8;
+                    IconDrawUtil.drawFriends(extractor, x, y, color);
                 }
         ));
 
@@ -92,8 +94,8 @@ public abstract class TitleScreenMixin extends Screen {
                     }
                 },
                 (extractor, x, y, hovered) -> {
-                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
-                    IconDrawUtil.drawShirt(extractor, x + 1, y + 1, color);
+                    int color = hovered ? 0xFFFFFFFF : 0xFFD8D8D8;
+                    IconDrawUtil.drawShirt(extractor, x, y, color);
                 }
         ));
 
@@ -103,12 +105,12 @@ public abstract class TitleScreenMixin extends Screen {
                 Component.literal("Screenshots"),
                 btn -> {},
                 (extractor, x, y, hovered) -> {
-                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
-                    IconDrawUtil.drawGallery(extractor, x + 1, y + 1, color);
+                    int color = hovered ? 0xFFFFFFFF : 0xFFD8D8D8;
+                    IconDrawUtil.drawGallery(extractor, x, y, color);
                 }
         ));
 
-        // 5. Settings / Mod Options Icon
+        // 5. Settings / Mixer Sliders Icon
         this.addRenderableWidget(new VanillaIconButton(
                 rightX, startY + (step * 4), btnSize,
                 Component.literal("Native Settings"),
@@ -118,8 +120,8 @@ public abstract class TitleScreenMixin extends Screen {
                     }
                 },
                 (extractor, x, y, hovered) -> {
-                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
-                    IconDrawUtil.drawSettings(extractor, x + 1, y + 1, color);
+                    int color = hovered ? 0xFFFFFFFF : 0xFFD8D8D8;
+                    IconDrawUtil.drawSettings(extractor, x, y, color);
                 }
         ));
 
@@ -129,8 +131,8 @@ public abstract class TitleScreenMixin extends Screen {
                 Component.literal("Account Profile"),
                 btn -> {},
                 (extractor, x, y, hovered) -> {
-                    // Draw 8x8 player face centered
-                    IconDrawUtil.drawPlayerHead(extractor, x + 1, y + 1, 8);
+                    // Draw 8x8 player skin face centered
+                    IconDrawUtil.drawPlayerHead(extractor, x + 2, y + 2, 8);
                 }
         ));
     }
@@ -139,17 +141,25 @@ public abstract class TitleScreenMixin extends Screen {
     private void renderNativeTitleScreenOverlay(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
 
-        // 1. Current Account Text (Centered directly below Options / Quit row, exactly like Essential)
+        // 1. Calculate dynamically lowest button Y position so account text never overlaps
+        int maxBtnBottom = 0;
+        for (GuiEventListener listener : this.children()) {
+            if (listener instanceof AbstractWidget widget) {
+                if (!(widget instanceof VanillaIconButton) && !(widget instanceof NativePlayerPreview)) {
+                    maxBtnBottom = Math.max(maxBtnBottom, widget.getY() + widget.getHeight());
+                }
+            }
+        }
+
+        // Place cleanly 12 pixels below the lowest vanilla button (Options/Quit)
+        int accountY = (maxBtnBottom > 0) ? (maxBtnBottom + 12) : (this.height - 24);
+
         String username = mc.getUser() != null ? mc.getUser().getName() : "Player";
         String accountText = "Current Account: " + username;
         int textWidth = mc.font.width(accountText);
         int centerX = (this.width - textWidth) / 2;
 
-        // Standard Options button row is at: this.height / 4 + 48 + 72 + 12 (height = 20)
-        // We place this cleanly 7px below the row:
-        int accountY = (this.height / 4 + 132) + 20 + 7;
-
-        // Clean text with drop shadow (Warm coral color #E58B68) - NO sci-fi box
+        // Clean text with drop shadow (Warm coral color #E58B68)
         extractor.text(mc.font, accountText, centerX, accountY, 0xFFE58B68, true);
 
         // 2. Client Branding on Bottom Left (Cleanly above Minecraft version to prevent collision)
