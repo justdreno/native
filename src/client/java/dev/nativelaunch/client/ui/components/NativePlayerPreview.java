@@ -56,20 +56,7 @@ public class NativePlayerPreview extends NativeWidget {
     protected void extractWidgetRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float delta) {
         updateHoverState(delta);
 
-        // Glass Podium / Platform under the player
-        int pedestalY = this.getY() + this.height - 12;
-        int pedestalHeight = 8;
-        int pedestalColor = ColorUtil.lerpColor(ColorUtil.GLASS_BG, ColorUtil.GLASS_BG_HOVER, this.hoverProgress);
-        int pedestalBorder = ColorUtil.lerpColor(ColorUtil.GLASS_BORDER, ColorUtil.ACCENT_CYAN, this.hoverProgress);
-
-        Render2D.drawGlassPanel(extractor, this.getX() + 6, pedestalY, this.width - 12, pedestalHeight, 4, pedestalColor, pedestalBorder);
-
-        // Subtle spotlight glow behind avatar
-        if (this.hoverProgress > 0.05f) {
-            Render2D.drawGlow(extractor, this.getX() + 10, this.getY() + 20, this.width - 20, this.height - 30, ColorUtil.ACCENT_CYAN, 3);
-        }
-
-        // 3D Player Model Rendering
+        // 3D Player Model Rendering (Clean, no sci-fi box or glow)
         this.skinWidget.extractRenderState(extractor, mouseX, mouseY, delta);
     }
 

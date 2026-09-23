@@ -1,9 +1,8 @@
 package dev.nativelaunch.client.mixin;
 
-import dev.nativelaunch.client.ui.components.NativeIconButton;
 import dev.nativelaunch.client.ui.components.NativePlayerPreview;
-import dev.nativelaunch.client.ui.render.ColorUtil;
-import dev.nativelaunch.client.ui.render.Render2D;
+import dev.nativelaunch.client.ui.components.VanillaIconButton;
+import dev.nativelaunch.client.ui.render.IconDrawUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -23,85 +22,115 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void initNativeTitleScreen(CallbackInfo ci) {
-        // --- 1. Left Side: 3D Player Model & Wardrobe Action ---
-        int playerWidth = 80;
-        int playerHeight = 140;
-        int playerX = 24;
-        int playerY = (this.height / 2) - 80;
+        // --- 1. Left Side: Natural 3D Player Avatar & Wardrobe Button ---
+        int playerWidth = 65;
+        int playerHeight = 125;
+        int playerX = 38;
+        // Position player standing naturally towards bottom
+        int playerY = Math.max(10, this.height - 165);
 
         NativePlayerPreview playerPreview = new NativePlayerPreview(playerX, playerY, playerWidth, playerHeight);
         this.addRenderableWidget(playerPreview);
 
-        // Wardrobe quick button directly below 3D player avatar
-        int wardrobeBtnSize = 22;
-        int wardrobeBtnX = playerX + (playerWidth - wardrobeBtnSize) / 2;
-        int wardrobeBtnY = playerY + playerHeight + 4;
+        // Vanilla-style 20x20 Wardrobe Button directly below the player (like Essential)
+        int wardrobeSize = 20;
+        int wardrobeX = playerX + (playerWidth - wardrobeSize) / 2;
+        int wardrobeY = this.height - 35;
 
-        this.addRenderableWidget(new NativeIconButton(
-                wardrobeBtnX,
-                wardrobeBtnY,
-                wardrobeBtnSize,
-                "\u2261", // Sleek icon / wardrobe
-                Component.literal("Wardrobe & Cosmetics"),
-                () -> {
-                    // Open wardrobe / skin customization
+        this.addRenderableWidget(new VanillaIconButton(
+                wardrobeX,
+                wardrobeY,
+                wardrobeSize,
+                Component.literal("Wardrobe"),
+                btn -> {
                     if (this.minecraft != null) {
                         this.minecraft.setScreenAndShow(new net.minecraft.client.gui.screens.options.SkinCustomizationScreen(this, this.minecraft.options));
                     }
+                },
+                (extractor, x, y, hovered) -> {
+                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
+                    IconDrawUtil.drawShirt(extractor, x + 1, y, color);
                 }
         ));
 
-        // --- 2. Right Side: Vertical Essential-Style Icon Toolbar ---
-        int iconSize = 22;
-        int rightX = this.width - iconSize - 12;
-        int startY = (this.height / 2) - 60;
-        int spacing = 26;
+        // --- 2. Right Side: Vertical 6-Button Toolbar (Authentic Minecraft Buttons) ---
+        int btnSize = 20;
+        int rightX = this.width - btnSize - 4;
+        int totalHeight = (6 * btnSize) + (5 * 2); // 6 buttons + 2px gaps
+        int startY = (this.height - totalHeight) / 2;
+        int step = btnSize + 2;
 
-        // News Icon
-        this.addRenderableWidget(new NativeIconButton(
-                rightX, startY, iconSize,
-                "\u25CE", // Target / Broadcast icon
-                Component.literal("News & Announcements"),
-                () -> {}
+        // 1. News Icon
+        this.addRenderableWidget(new VanillaIconButton(
+                rightX, startY, btnSize,
+                Component.literal("News"),
+                btn -> {},
+                (extractor, x, y, hovered) -> {
+                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
+                    IconDrawUtil.drawNews(extractor, x + 1, y + 1, color);
+                }
         ));
 
-        // Friends / Social Icon
-        this.addRenderableWidget(new NativeIconButton(
-                rightX, startY + spacing, iconSize,
-                "\u263A", // Smiley / Social
-                Component.literal("Friends & Social"),
-                () -> {}
+        // 2. Friends / Social Icon
+        this.addRenderableWidget(new VanillaIconButton(
+                rightX, startY + step, btnSize,
+                Component.literal("Friends"),
+                btn -> {},
+                (extractor, x, y, hovered) -> {
+                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
+                    IconDrawUtil.drawFriends(extractor, x + 1, y + 1, color);
+                }
         ));
 
-        // Wardrobe Icon
-        this.addRenderableWidget(new NativeIconButton(
-                rightX, startY + (spacing * 2), iconSize,
-                "\u2606", // Star / Cosmetics
-                Component.literal("Wardrobe & Outfits"),
-                () -> {
+        // 3. Wardrobe / Cosmetics Icon
+        this.addRenderableWidget(new VanillaIconButton(
+                rightX, startY + (step * 2), btnSize,
+                Component.literal("Wardrobe"),
+                btn -> {
                     if (this.minecraft != null) {
                         this.minecraft.setScreenAndShow(new net.minecraft.client.gui.screens.options.SkinCustomizationScreen(this, this.minecraft.options));
                     }
+                },
+                (extractor, x, y, hovered) -> {
+                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
+                    IconDrawUtil.drawShirt(extractor, x + 1, y + 1, color);
                 }
         ));
 
-        // Screenshots Gallery Icon
-        this.addRenderableWidget(new NativeIconButton(
-                rightX, startY + (spacing * 3), iconSize,
-                "\u25A3", // Gallery / Frame icon
-                Component.literal("Screenshots & Gallery"),
-                () -> {}
+        // 4. Screenshots / Gallery Icon
+        this.addRenderableWidget(new VanillaIconButton(
+                rightX, startY + (step * 3), btnSize,
+                Component.literal("Screenshots"),
+                btn -> {},
+                (extractor, x, y, hovered) -> {
+                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
+                    IconDrawUtil.drawGallery(extractor, x + 1, y + 1, color);
+                }
         ));
 
-        // Native Settings Icon
-        this.addRenderableWidget(new NativeIconButton(
-                rightX, startY + (spacing * 4), iconSize,
-                "\u2699", // Gear / Settings icon
-                Component.literal("Native Client Settings"),
-                () -> {
+        // 5. Settings / Mod Options Icon
+        this.addRenderableWidget(new VanillaIconButton(
+                rightX, startY + (step * 4), btnSize,
+                Component.literal("Native Settings"),
+                btn -> {
                     if (this.minecraft != null) {
                         this.minecraft.setScreenAndShow(new net.minecraft.client.gui.screens.options.OptionsScreen(this, this.minecraft.options));
                     }
+                },
+                (extractor, x, y, hovered) -> {
+                    int color = hovered ? 0xFFFFFFFF : 0xFFCCCCCC;
+                    IconDrawUtil.drawSettings(extractor, x + 1, y + 1, color);
+                }
+        ));
+
+        // 6. Account / Profile Face Icon
+        this.addRenderableWidget(new VanillaIconButton(
+                rightX, startY + (step * 5), btnSize,
+                Component.literal("Account Profile"),
+                btn -> {},
+                (extractor, x, y, hovered) -> {
+                    // Draw 8x8 player face centered
+                    IconDrawUtil.drawPlayerHead(extractor, x + 1, y + 1, 8);
                 }
         ));
     }
@@ -110,19 +139,21 @@ public abstract class TitleScreenMixin extends Screen {
     private void renderNativeTitleScreenOverlay(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
 
-        // 1. Current Account Bar (Center Bottom, as in Essential Mod)
+        // 1. Current Account Text (Centered directly below Options / Quit row, exactly like Essential)
         String username = mc.getUser() != null ? mc.getUser().getName() : "Player";
         String accountText = "Current Account: " + username;
-        int centerX = this.width / 2;
-        int bottomY = this.height - 24;
-
-        // Subtle glow backdrop for account text
         int textWidth = mc.font.width(accountText);
-        Render2D.drawGlassPanel(extractor, centerX - (textWidth / 2) - 8, bottomY - 3, textWidth + 16, 14, 3, ColorUtil.rgba(15, 15, 20, 140), ColorUtil.rgba(255, 140, 66, 80));
-        Render2D.drawCenteredString(extractor, mc.font, accountText, centerX, bottomY, ColorUtil.ACCENT_ORANGE);
+        int centerX = (this.width - textWidth) / 2;
 
-        // 2. Branding watermark on Bottom Left
+        // Standard Options button row is at: this.height / 4 + 48 + 72 + 12 (height = 20)
+        // We place this cleanly 7px below the row:
+        int accountY = (this.height / 4 + 132) + 20 + 7;
+
+        // Clean text with drop shadow (Warm coral color #E58B68) - NO sci-fi box
+        extractor.text(mc.font, accountText, centerX, accountY, 0xFFE58B68, true);
+
+        // 2. Client Branding on Bottom Left (Cleanly above Minecraft version to prevent collision)
         String branding = "Native Client v1.0.0";
-        Render2D.drawString(extractor, mc.font, branding, 6, this.height - 12, ColorUtil.ACCENT_CYAN);
+        extractor.text(mc.font, branding, 2, this.height - 20, 0xFFAAAAAA, true);
     }
 }
