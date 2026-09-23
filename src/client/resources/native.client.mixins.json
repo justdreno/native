@@ -3,7 +3,8 @@
 	"package": "dev.nativelaunch.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"ExampleClientMixin"
+		"ExampleClientMixin",
+		"TitleScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
